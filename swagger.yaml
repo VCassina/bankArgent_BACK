@@ -34,6 +34,7 @@ paths:
           description: Invalid Fields
         '500':
           description: Internal Server Error
+
   /user/signup:
     post:
       tags:
@@ -58,6 +59,7 @@ paths:
           description: Invalid Fields
         '500':
           description: Internal Server Error
+
   /user/profile:
     post:
       security:
@@ -100,20 +102,22 @@ paths:
           description: Invalid Fields
         '500':
           description: Internal Server Error
+
   /accounts:
     get:
       security:
         - Bearer: []
       tags:
         - User Module
-      summary: Get User accounts, every Id and Solde of its.
+      summary: Accounts summary informations.
       description: API to retrieve user profile accounts summary (id/solde) to show.
       parameters:
-        - name: Authorization
-          in: header
-          description: Authentification Token
+        - in: body
+          name: User ID
+          description: User ID
           required: true
-          type: string
+          schema:
+            $ref: '#/definitions/UserID'
       produces:
         - application/json
       responses:
@@ -122,7 +126,7 @@ paths:
           schema:
             type: object
             properties:
-              idAccount:
+              accountId:
                 type: string
               solde:
                 type: integer
@@ -130,25 +134,28 @@ paths:
           description: Unauthorized - Missing or invalid token
         '500':
           description: Internal Server Error
-  /accounts/{accountID}/transactions:
+
+  /accounts/{accountId}/transactions:
     get:
       security:
         - Bearer: []
       tags:
         - User Module
-      summary: For every user account found, retrieve the transaction history.
-      description: For every user account found, retrieve the transaction history - About the 25 first ones, 25 others for another request, etc.
+      summary: Accounts detailed informations.
+      description: User accounts detailed informations by slide of 15 items.
       parameters:
-        - name: Authorization
-          in: header
-          description: Authentification Token
-          required: true
-          type: string
-        - name: account ID
+        - name: accountId
           in: path
-          description: Account ID
+          description: Account ID.
           required: true
-          type: string
+          type: integer
+        - name: slideIndex
+          in: body
+          description: slideIndex use for pagination.
+          required: true
+          type: integer
+          schema:
+            $ref: '#/definitions/SlideIndex'
       produces:
         - application/json
       responses:
@@ -161,6 +168,96 @@ paths:
                 type: array
                 items:
                   $ref: '#/definitions/Transaction'
+          examples:
+            application/json:
+              transactions:
+                - transactionId: "1"
+                  date: "2023-07-01T09:00:00Z"
+                  description: "Transaction 1"
+                  type: "debit"
+                  category: "expense"
+                  note: "Note 1"
+                - transactionId: "2"
+                  date: "2023-07-02T14:30:00Z"
+                  description: "Transaction 2"
+                  type: "credit"
+                  category: "income"
+                  note: "Note 2"
+                - transactionId: "3"
+                  date: "2023-07-03T12:00:00Z"
+                  description: "Transaction 3"
+                  type: "debit"
+                  category: "expense"
+                  note: "Note 3"
+        '401':
+          description: Unauthorized - Missing or invalid token
+        '500':
+          description: Internal Server Error
+
+  /accounts/{accountId}/transactions/{transactionID}/details:
+    put:
+      security:
+        - Bearer: []
+      tags:
+        - User Module
+      summary: Update transaction details.
+      description: Update the category and note of a specific transaction.
+      parameters:
+        - name: accountId
+          in: path
+          description: Account ID
+          required: true
+          type: integer
+        - name: transactionID
+          in: path
+          description: Transaction ID
+          required: true
+          type: string
+        - name: body
+          in: body
+          description: Details to update.
+          required: true
+          schema:
+            $ref: '#/definitions/BodyDetails'
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: Transaction details updated successfully
+          schema:
+            $ref: '#/definitions/ApiResponse'
+        '400':
+          description: Invalid Fields
+        '401':
+          description: Unauthorized - Missing or invalid token
+        '500':
+          description: Internal Server Error
+
+    delete:
+      security:
+        - Bearer: []
+      tags:
+        - User Module
+      summary: Delete transaction details.
+      description: Delete a specific transaction details.
+      parameters:
+        - name: accountId
+          in: path
+          description: Account ID
+          required: true
+          type: integer
+        - name: transactionID
+          in: path
+          description: Transaction ID
+          required: true
+          type: string
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: Transaction details deleted successfully
+          schema:
+            $ref: '#/definitions/ApiResponse'
         '401':
           description: Unauthorized - Missing or invalid token
         '500':
@@ -168,21 +265,25 @@ paths:
 
 definitions:
   Transaction:
-    type: object
-    properties:
-      transactionId:
-        type: string
-      date:
-        type: string
-        format: date-time
-      description:
-        type: string
-      type:
-        type: string
-      category:
-        type: string
-      note:
-        type: string
+    type: array
+    items:
+      type: object
+      properties:
+        transactionId:
+          type: string
+        date:
+          type: string
+          format: date-time
+        description:
+          type: string
+        type:
+          type: string
+        category:
+          type: string
+        note:
+          type: string
+
+
   User:
     type: object
     properties:
@@ -201,6 +302,7 @@ definitions:
       userName:
         type: string
         description: user public name
+
   Login:
     type: object
     properties:
@@ -210,6 +312,7 @@ definitions:
       password:
         type: string
         description: user password
+
   ApiResponse:
     type: object
     properties:
@@ -224,16 +327,39 @@ definitions:
             type: string
           email:
             type: string
+
   LoginResponse:
     type: object
     properties:
       token:
         type: string
+
   UserProfile:
     type: object
     properties:
       userName:
         type: string
+
+  UserID:
+    type: object
+    properties:
+      userID:
+        type: integer
+
+  SlideIndex: 
+    type: object
+    properties:
+      slideIndex:
+        type: integer
+
+  BodyDetails:
+    type: object
+    properties:
+      category: 
+        type: string
+      note: 
+        type: string
+
 
 securityDefinitions:
   Bearer:
