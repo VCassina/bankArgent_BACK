@@ -8,6 +8,7 @@ host: localhost:3001
 basePath: /api/v1
 schemes:
   - http
+
 paths:
   /user/login:
     post:
@@ -65,11 +66,9 @@ paths:
         - User Module
       summary: User Profile API
       description: API for fetching a user profile
-      #produces:
-       # - application/json
       responses:
         '200':
-          description: User profile retrieved successully
+          description: User profile retrieved successfully
           schema:
             $ref: '#/definitions/ApiResponse'
         '400':
@@ -94,20 +93,98 @@ paths:
         - application/json
       responses:
         '200':
-          description: User profile retrieved successully
+          description: User profile retrieved successfully
           schema:
             $ref: '#/definitions/ApiResponse'
         '400':
           description: Invalid Fields
         '500':
           description: Internal Server Error
-securityDefinitions:
-  Bearer:
-    type: apiKey
-    name: Authorization
-    in: header
+  /accounts:
+    get:
+      security:
+        - Bearer: []
+      tags:
+        - User Module
+      summary: Get User accounts, every Id and Solde of its.
+      description: API to retrieve user profile accounts summary (id/solde) to show.
+      parameters:
+        - name: Authorization
+          in: header
+          description: Authentification Token
+          required: true
+          type: string
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          schema:
+            type: object
+            properties:
+              idAccount:
+                type: string
+              solde:
+                type: integer
+        '401':
+          description: Unauthorized - Missing or invalid token
+        '500':
+          description: Internal Server Error
+  /accounts/{accountID}/transactions:
+    get:
+      security:
+        - Bearer: []
+      tags:
+        - User Module
+      summary: For every user account found, retrieve the transaction history.
+      description: For every user account found, retrieve the transaction history - About the 25 first ones, 25 others for another request, etc.
+      parameters:
+        - name: Authorization
+          in: header
+          description: Authentification Token
+          required: true
+          type: string
+        - name: account ID
+          in: path
+          description: Account ID
+          required: true
+          type: string
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          schema:
+            type: object
+            properties:
+              transactions:
+                type: array
+                items:
+                  $ref: '#/definitions/Transaction'
+        '401':
+          description: Unauthorized - Missing or invalid token
+        '500':
+          description: Internal Server Error
+
 definitions:
+  Transaction:
+    type: object
+    properties:
+      transactionId:
+        type: string
+      date:
+        type: string
+        format: date-time
+      description:
+        type: string
+      type:
+        type: string
+      category:
+        type: string
+      note:
+        type: string
   User:
+    type: object
     properties:
       email:
         type: string
@@ -125,6 +202,7 @@ definitions:
         type: string
         description: user public name
   Login:
+    type: object
     properties:
       email:
         type: string
@@ -156,3 +234,9 @@ definitions:
     properties:
       userName:
         type: string
+
+securityDefinitions:
+  Bearer:
+    type: apiKey
+    name: Authorization
+    in: header
